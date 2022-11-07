@@ -14,27 +14,39 @@ export default class App extends Component {
     ],
     filter: '',
   };
+  
+  componentDidMount() {
+    const contacts = localStorage.getItem('contacts');
+    const parsedContacts = JSON.parse(contacts);
+    if (parsedContacts) this.setState({ contacts: parsedContacts });
+  }
 
-  handleAddContact = (nameFromForm, numberFromForm) => {
-    let isPresent = false;
+  componentDidUpdate(prevState) {
+    const { contacts: nowContacts } = this.state;
+    const { contacts: prevContacts } = prevState;
+    if (nowContacts !== prevContacts) {
+      localStorage.setItem('contacts', JSON.stringify(nowContacts));
+    }
+  }
+
+  handleAddContact = (name, number) => {
+    if (!name) return this.showNotification('Please enter contact name.');
+    if (!number) return this.showNotification('Please enter contact number.');
+
     const contact = {
       id: uuidv4(),
-      name: nameFromForm,
-      number: numberFromForm,
+      name,
+      number,
     };
-    const { contacts } = this.state;
-    contacts.forEach(el => {
-      if (el.name === contact.name) {
-        alert(`${el.name} is already in contacts.`);
-        isPresent = true;
-        return;
-      }
-    });
 
-    if (isPresent) return;
-    this.setState(prevState => {
-      return { contacts: [...prevState.contacts, contact] };
-    });
+    const { contacts } = this.state;
+    const hasPresent = contacts.some(contact => contact.name === name);
+
+    hasPresent
+      ? this.showNotification(`${name} is already in contacts.`)
+      : this.setState(prevState => {
+          return { contacts: [...prevState.contacts, contact] };
+        });
   };
 
   handleFilter = filter => {
